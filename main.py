@@ -82,15 +82,7 @@ class CluSTP:
                 open_set.remove(random_open_vertice)
                 close_set.add(random_open_vertice)
 
-                # 2. nối các cụm chưa được nối với cụm nào vào các cụm đã nối (cụm đã nối đầu tiên là cụm gốc)
-                #         # find root cluster
-                #         root_cluster = 0
-                #         for i, Ri in enumerate(self.R):
-                #             if self.source_vertex in Ri:
-                #                 root_cluster = i
-                #                 break
-                #         print("Root Cluster =", root_cluster)
-
+        # 2. nối các cụm chưa được nối với cụm nào vào các cụm đã nối
         # add edges from cluster to cluster
         cluster_indexes = set(range(self.n_clusters))
         open_set = cluster_indexes
@@ -117,6 +109,7 @@ class CluSTP:
             #         pass
             self.cost = self.calculate_cost()
             self.total_cost = np.sum(self.cost)
+            print("Connect cluster", random_close_cluster, random_open_cluster)
 
     def add_edge(self, i, j):
         # print('add', i, j)
@@ -203,8 +196,8 @@ class CluSTP:
 
     def set_value_propagate(self, out_vertice, connected_vertice, new_out_vertice, new_connected_vertice):
         # update x, out_vertices_of_cluster
-        self.add_edge(new_out_vertice, new_connected_vertice)
         self.remove_edge(out_vertice, connected_vertice)
+        self.add_edge(new_out_vertice, new_connected_vertice)
 
         # update cost, total cost
         vertices_in_leaf_cluster = self.R[int(self.cluster_of_vertices[out_vertice])]
@@ -219,8 +212,12 @@ class CluSTP:
         leaf_clusters = [i for i in range(self.n_clusters) if len(self.out_vertices_of_cluster[i]) == 1] #np.where(self.n_out == 1)[0]
         random_cluster = np.random.choice(leaf_clusters)
 
-        out_vertice = self.out_vertices_of_cluster[random_cluster][0]
-        connected_vertice = np.where(self.x[out_vertice, :] == 1)[0][0]
+        out_vertices = self.out_vertices_of_cluster[random_cluster]
+        out_vertice = random.sample(out_vertices, 1)[0]
+        connected_vertices = np.where(self.x[out_vertice, :] == 1)[0]
+        # must choose vertice that are not in the same cluster
+        connected_vertices = set(connected_vertices).difference(self.R[random_cluster])
+        connected_vertice = random.sample(connected_vertices, 1)[0]
         # current_connected_cluster = self.cluster_of_vertices[connected_vertice]
         # other_clusters = list(range(self.n_clusters)).remove(current_connected_cluster)
 
@@ -231,6 +228,8 @@ class CluSTP:
         new_combination_vertices = []
         for new_out_vertice in cluster_vertices:
             for new_connected_vertice in other_vertices:
+                if self.cluster_of_vertices[new_out_vertice] == self.cluster_of_vertices[new_connected_vertice]:
+                    print(1)
                 new_combination_vertices.append((new_out_vertice, new_connected_vertice))
 
         return (out_vertice, connected_vertice), new_combination_vertices
@@ -238,6 +237,7 @@ class CluSTP:
     def search(self):
         # search solution:
         # choose one leaf cluster, make change inside cluster, move out-egde of cluster to another cluster
+        print("Init out vertices of cluster =", self.out_vertices_of_cluster)
         while True:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             (out_vertice, connected_vertice) = old_combination_vertices
@@ -249,11 +249,17 @@ class CluSTP:
                 deltas.append(delta)
 
             min_index = np.argmin(deltas)
-            if deltas[int(min_index)] <= 0:
-                chosen_combination = new_combination_vertices[int(min_index)]
-                self.set_value_propagate(out_vertice, connected_vertice, chosen_combination[0], chosen_combination[1])
-
-            print("Current Cost =", self.total_cost)
+            # if deltas[int(min_index)] <= 0:
+            chosen_combination = new_combination_vertices[int(min_index)]
+            self.set_value_propagate(out_vertice, connected_vertice, chosen_combination[0], chosen_combination[1])
+            # print("Remove", out_vertice, connected_vertice,
+            #       "from cluster", self.cluster_of_vertices[out_vertice],
+            #       "to cluster", self.cluster_of_vertices[connected_vertice],
+            #       "\nAdd", chosen_combination[0], chosen_combination[1],
+            #       "from cluster", self.cluster_of_vertices[chosen_combination[0]],
+            #       "to cluster", self.cluster_of_vertices[chosen_combination[1]],)
+            print("Current Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
+            # print("--------------------------------------------------------------")
 
 
     def get_solution_file(self):

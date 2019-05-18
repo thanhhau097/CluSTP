@@ -234,6 +234,14 @@ class CluSTP:
 
         return (out_vertice, connected_vertice), new_combination_vertices
 
+    def get_neighbors_inside_cluster(self):
+        random_cluster = np.random.randint(self.n_clusters)
+        while len(self.R[random_cluster]) <= 2: # không xét đến cluster có 2 đỉnh
+            random_cluster = np.random.randint(self.n_clusters)
+        # tạo chu trình trong cluster đc chọn này, sau đó loại bỏ 1 cạnh trong chu trình để được cây khung mới
+        cluster_vertices = self.R[random_cluster]
+
+
     def search(self):
         # search solution:
         # choose one leaf cluster, make change inside cluster, move out-egde of cluster to another cluster

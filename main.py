@@ -5,6 +5,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 import copy
+import heapq as priority_queue
+from collections import defaultdict
 
 class CluSTP:
     def __init__(self, filename):
@@ -237,45 +239,99 @@ class CluSTP:
 
         return (out_vertex, connected_vertex), new_combination_vertices
 
+    #### INSIDE CLUSTER
+    def remove_all_edge_in_cluster(self, cluster):
+        pass
+
+    def dijkstra_cluster(self, source_vertex):
+        new_edge = {}
+        S1 = defaultdict(lambda:False)
+        p_queue = []
+        min_distance = defaultdict(lambda:float("inf"))
+        list_vertex = self.R[self.cluster_of_vertices[source_vertex]]
+        num_vertex = len(list_vertex)
+        min_distance[source_vertex] = 0
+        priority_queue.heappush(p_queue, (0, source_vertex))
+        current_num_vertex = 0
+        while(current_num_vertex < num_vertex):
+            for u in p_queue:
+                if S1[u[1]] == False:
+                    break
+            S1.[u[1]] = True
+            current_num_vertex += 1
+            for v in list_vertex:
+                uv = self.distances[u[1]][v]
+                if min_distance[v] > min_distance[u[1]] + uv:
+                    min_distance[v] = min_distance[u[1]] + uv
+                    priority_queue.heappush(p_queue, (min_distance[v], v))
+                    new_edge[v] = u[1]
+
+
+        #Sau khi tim duoc cac canh moi o new_edge, su dung no de cap nhat lai cay
+        #khung trong cum dang xet
+        #Set value propagate:
+        self.remove_all_edge_in_cluster(self.cluster_of_vertices[source_vertex])
+        for i in new_edge:
+            self.add_edge(new_edge[j], i)
+        #TODO: Update new cost????
+
+
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):
         pass
 
     def set_value_propagate_inside_cluster(self, cluster, new_edge, old_edge):
         pass
 
-    # def calculate_cost_inside_cluster(self, cluster, source):
-    #     # cost of source of cluster will be set to 0
-    #     # how can we find source of cluster?
-    #     # using BFS
-    #     cluster_vertices = self.R[cluster]
-    #
-    #     cost = np.zeros(self.n)
-    #     cost[source] = 0
-    #
-    #     visited = [False] * self.n
-    #
-    #     # Create a queue for BFS
-    #     queue = []
-    #
-    #     queue.append(self.source_vertex)
-    #     visited[self.source_vertex] = True
-    #
-    #     while queue:
-    #         s = queue.pop(0)
-    #
-    #         neighbors = np.where(self.x[s] == 1)[0]
-    #         neighbors = set(neighbors).intersection(set(cluster_vertices))
-    #         for i in neighbors:
-    #             if visited[i] == False:
-    #                 queue.append(i)
-    #                 visited[i] = True
-    #                 cost[i] = self.distances[s][i] + cost[s]
-    #
-    #     return cost
-
     def find_cycle_inside_cluster(self, source):
+
         # Use DFS
         pass
+
+    # A recursive function that uses visited[] and parent to detect
+    # cycle in subgraph reachable from vertex v.
+    def isCyclicUtil(self, v, visited, parent, parents):
+
+        # Mark the current node as visited
+        visited[v] = True
+        parents[v] = parent
+
+        # Recur for all the vertices adjacent to this vertex
+        cluster_vertices = self.R[self.cluster_of_vertices[v]]
+        neighbors = np.where(self.x[v] == 1)[0]
+        neighbors = set(neighbors).intersection(set(cluster_vertices))
+
+        for i in neighbors:
+            # If the node is not visited then recurse on it
+            if visited[i] == False:
+                if (self.isCyclicUtil(i, visited, v)):
+                    return True, parents
+            # If an adjacent vertex is visited and not parent of current vertex,
+            # then there is a cycle
+            elif parent != i:
+                return True, parents
+
+        return False, parents
+
+    # Returns true if the graph contains a cycle, else false.
+    def isCyclic(self):
+        parents = np.zeros(self.n)
+        # Mark all the vertices as not visited
+        visited = [False] * (self.n)
+        # Call the recursive helper function to detect cycle in different
+        # DFS trees
+        for i in range(self.n):
+            if visited[i] == False:  # Don't recur for u if it is already visited
+                if (self.isCyclicUtil(i, visited, -1, parents)) == True:
+                    return True, parents
+
+        return False, parents
+
+    def get_cycle(self):
+        is_having_cycle, parents = self.isCyclic()
+        if is_having_cycle:
+            pass
+        else:
+            print("PLEASE CHECK, THERE ARE NO CYCLE")
 
     def get_neighbors_inside_cluster(self):
         random_cluster = np.random.randint(self.n_clusters)
@@ -287,13 +343,14 @@ class CluSTP:
         # use DFS
 
 
+    ###### SEARCH
 
     def search(self):
         # search solution:
         # choose one leaf cluster, make change inside cluster, move out-egde of cluster to another cluster
         print("Init out vertices of cluster =", self.out_vertices_of_cluster)
         it = 1
-        while True:
+        while True and it <1001:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             (out_vertex, connected_vertex) = old_combination_vertices
 

@@ -237,45 +237,64 @@ class CluSTP:
 
         return (out_vertex, connected_vertex), new_combination_vertices
 
+    #### INSIDE CLUSTER
+
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):
         pass
 
     def set_value_propagate_inside_cluster(self, cluster, new_edge, old_edge):
         pass
 
-    # def calculate_cost_inside_cluster(self, cluster, source):
-    #     # cost of source of cluster will be set to 0
-    #     # how can we find source of cluster?
-    #     # using BFS
-    #     cluster_vertices = self.R[cluster]
-    #
-    #     cost = np.zeros(self.n)
-    #     cost[source] = 0
-    #
-    #     visited = [False] * self.n
-    #
-    #     # Create a queue for BFS
-    #     queue = []
-    #
-    #     queue.append(self.source_vertex)
-    #     visited[self.source_vertex] = True
-    #
-    #     while queue:
-    #         s = queue.pop(0)
-    #
-    #         neighbors = np.where(self.x[s] == 1)[0]
-    #         neighbors = set(neighbors).intersection(set(cluster_vertices))
-    #         for i in neighbors:
-    #             if visited[i] == False:
-    #                 queue.append(i)
-    #                 visited[i] = True
-    #                 cost[i] = self.distances[s][i] + cost[s]
-    #
-    #     return cost
-
     def find_cycle_inside_cluster(self, source):
+
         # Use DFS
         pass
+
+    # A recursive function that uses visited[] and parent to detect
+    # cycle in subgraph reachable from vertex v.
+    def isCyclicUtil(self, v, visited, parent, parents):
+
+        # Mark the current node as visited
+        visited[v] = True
+        parents[v] = parent
+
+        # Recur for all the vertices adjacent to this vertex
+        cluster_vertices = self.R[self.cluster_of_vertices[v]]
+        neighbors = np.where(self.x[v] == 1)[0]
+        neighbors = set(neighbors).intersection(set(cluster_vertices))
+
+        for i in neighbors:
+            # If the node is not visited then recurse on it
+            if visited[i] == False:
+                if (self.isCyclicUtil(i, visited, v)):
+                    return True, parents
+            # If an adjacent vertex is visited and not parent of current vertex,
+            # then there is a cycle
+            elif parent != i:
+                return True, parents
+
+        return False, parents
+
+    # Returns true if the graph contains a cycle, else false.
+    def isCyclic(self):
+        parents = np.zeros(self.n)
+        # Mark all the vertices as not visited
+        visited = [False] * (self.n)
+        # Call the recursive helper function to detect cycle in different
+        # DFS trees
+        for i in range(self.n):
+            if visited[i] == False:  # Don't recur for u if it is already visited
+                if (self.isCyclicUtil(i, visited, -1, parents)) == True:
+                    return True, parents
+
+        return False, parents
+
+    def get_cycle(self):
+        is_having_cycle, parents = self.isCyclic()
+        if is_having_cycle:
+            pass
+        else:
+            print("PLEASE CHECK, THERE ARE NO CYCLE")
 
     def get_neighbors_inside_cluster(self):
         random_cluster = np.random.randint(self.n_clusters)
@@ -287,6 +306,7 @@ class CluSTP:
         # use DFS
 
 
+    ###### SEARCH
 
     def search(self):
         # search solution:

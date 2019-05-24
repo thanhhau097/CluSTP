@@ -26,6 +26,14 @@ class CluSTP:
         # self.n_out = np.zeros(self.n_clusters)
         self.total_cost = 0
 
+        ## GLS variables
+        self.gls_distances = self.distances
+        self.utils = np.zeros([self.n, self.n])
+        self.p = np.zeros([self.n, self.n])
+        # λ = α ∗ g(x∗)/(no. of features present in x∗)
+        self.ld = 1
+        self.gls_total_cost = 0
+
     def get_data(self, filename):
         with open(filename, 'r') as f:
             lines = f.readlines()
@@ -107,9 +115,25 @@ class CluSTP:
 
             # 3. cập nhật cost, total_cost
             #         pass
-            self.cost = self.calculate_cost()
+            self.cost = self.calculate_cost(self.distances)
             self.total_cost = np.sum(self.cost)
+            self.gls_total_cost = self.total_cost
             print("Connect cluster", random_close_cluster, random_open_cluster)
+
+        # for GLS
+        self.update_utils()
+
+    # TODO
+    # GLS
+    def update_utils(self):
+        self.utils = np.multiply(self.x, np.divide(self.gls_distances, (1 + self.p)))
+
+    def update_lambda(self, alpha=0.3):
+        # λ = α ∗ g(x∗)/(no. of features present in x∗)
+        self.ld = alpha * self.gls_total_cost / (self.n - 1)
+
+    def update_p(self, i, j):
+        self.p[i, j] += 1
 
     def add_edge(self, i, j):
         # print('add', i, j)
@@ -140,7 +164,7 @@ class CluSTP:
             self.out_vertices_of_cluster[int(self.cluster_of_vertices[i])].remove(i)
             self.out_vertices_of_cluster[int(self.cluster_of_vertices[j])].remove(j)
 
-    def calculate_cost(self):
+    def calculate_cost(self, distances):
         cost = np.zeros(self.n)
         cost[self.source_vertex] = 0
         # Mark all the vertices as not visited
@@ -337,6 +361,10 @@ class CluSTP:
             it += 1
             # print("--------------------------------------------------------------")
 
+    def gls_search(self):
+        # if local minimum -> update utils -> update p -> update gls_distances
+
+        pass
 
     def get_solution_file(self):
         pass

@@ -64,6 +64,7 @@ class CluSTP:
                     self.add_edge(i-6, j)
         self.cost = self.calculate_cost()
         self.total_cost = np.sum(self.cost)
+        print(self.x)
 
 
 
@@ -263,7 +264,7 @@ class CluSTP:
         S1 = defaultdict(lambda:False)
         p_queue = []
         min_distance = defaultdict(lambda:float("inf"))
-        list_vertex = self.R[int(self.cluster_of_vertices[source_vertex])]
+        list_vertex = list(self.R[int(self.cluster_of_vertices[source_vertex])])
         num_vertex = len(list_vertex)
         min_distance[source_vertex] = 0
         priority_queue.heappush(p_queue, (0, source_vertex))
@@ -281,17 +282,19 @@ class CluSTP:
                     priority_queue.heappush(p_queue, (min_distance[v], v))
                     new_edge[v] = u[1]
 
-
         #Sau khi tim duoc cac canh moi o new_edge, su dung no de cap nhat lai cay
         #khung trong cum dang xet
         #Remove all edge:
+        # for i in range(list_vertex):
+            # for 
         for i in range(num_vertex):
-            for j in range(i+1, num_vertex):
-                self.x[i][j] = 0
+            for j in range(num_vertex):
+                if self.x[list_vertex[i]][list_vertex[j]] == 1:
+                    self.remove_edge(i, j)
 
         #Update new cost????
-        for i in new_edge:
-            self.add_edge(new_edge[i], i)
+        # for i in new_edge:
+            # self.add_edge(new_edge[i], i)
         self.cost = self.calculate_cost()
         self.total_cost = np.sum(self.cost)
 
@@ -370,7 +373,7 @@ class CluSTP:
         # choose one leaf cluster, make change inside cluster, move out-egde of cluster to another cluster
         print("Init out vertices of cluster =", self.out_vertices_of_cluster)
         it = 1
-        while True and it <32:
+        while True and it < 1000:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             (out_vertex, connected_vertex) = old_combination_vertices
 
@@ -385,6 +388,8 @@ class CluSTP:
             chosen_combination = new_combination_vertices[int(min_index)]
             self.dijkstra_cluster(out_vertex)
             self.set_value_propagate(out_vertex, connected_vertex, chosen_combination[0], chosen_combination[1])
+            self.cost = self.calculate_cost()
+            self.total_cost = np.sum(self.cost)
             # print("Remove", out_vertex, connected_vertex,
             #       "from cluster", self.cluster_of_vertices[out_vertex],
             #       "to cluster", self.cluster_of_vertices[connected_vertex],
@@ -399,11 +404,13 @@ class CluSTP:
     def get_solution_file(self):
         pass
 
-obj = CluSTP('data/Type_1_Small/10berlin52.clt')
+obj = CluSTP('data/Type_1_Small/5berlin52.clt')
 obj.load_GA_solution('data/GAsol.opt')
 print(obj.total_cost)
 # obj.init_solution()
-# obj.show_graph()
-# print(obj.cost)
+obj.show_graph()
 # print(obj.source_vertex)
 obj.search()
+# print(obj.cost)
+obj.show_graph()
+

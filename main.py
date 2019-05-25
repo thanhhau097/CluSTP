@@ -52,6 +52,21 @@ class CluSTP:
 
         return n, n_clusters, coordinates, R, source_vertex
 
+    def load_GA_solution(self, filename):
+        self.x.fill(0)
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        size = len(lines) - 6
+        for i in range(6, len(lines)):
+            line = lines[i].split(" ")[:-1]
+            for j in range(size):
+                if line[j] == '1' and self.x[i-6][j] != 1:
+                    self.add_edge(i-6, j)
+        self.cost = self.calculate_cost()
+        self.total_cost = np.sum(self.cost)
+
+
+
     def get_cluster_of_vertices(self, R):
         clusters = np.zeros(self.n)
         for i, Ri in enumerate(R):
@@ -277,7 +292,8 @@ class CluSTP:
         #Update new cost????
         for i in new_edge:
             self.add_edge(new_edge[i], i)
-        self.calculate_cost()
+        self.cost = self.calculate_cost()
+        self.total_cost = np.sum(self.cost)
 
 
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):
@@ -354,7 +370,7 @@ class CluSTP:
         # choose one leaf cluster, make change inside cluster, move out-egde of cluster to another cluster
         print("Init out vertices of cluster =", self.out_vertices_of_cluster)
         it = 1
-        while True and it <1001:
+        while True and it <32:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             (out_vertex, connected_vertex) = old_combination_vertices
 
@@ -384,7 +400,9 @@ class CluSTP:
         pass
 
 obj = CluSTP('data/Type_1_Small/10berlin52.clt')
-obj.init_solution()
+obj.load_GA_solution('data/GAsol.opt')
+print(obj.total_cost)
+# obj.init_solution()
 # obj.show_graph()
 # print(obj.cost)
 # print(obj.source_vertex)

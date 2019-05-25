@@ -248,7 +248,7 @@ class CluSTP:
         S1 = defaultdict(lambda:False)
         p_queue = []
         min_distance = defaultdict(lambda:float("inf"))
-        list_vertex = self.R[self.cluster_of_vertices[source_vertex]]
+        list_vertex = self.R[int(self.cluster_of_vertices[source_vertex])]
         num_vertex = len(list_vertex)
         min_distance[source_vertex] = 0
         priority_queue.heappush(p_queue, (0, source_vertex))
@@ -257,7 +257,7 @@ class CluSTP:
             for u in p_queue:
                 if S1[u[1]] == False:
                     break
-            S1.[u[1]] = True
+            S1[u[1]] = True
             current_num_vertex += 1
             for v in list_vertex:
                 uv = self.distances[u[1]][v]
@@ -269,11 +269,15 @@ class CluSTP:
 
         #Sau khi tim duoc cac canh moi o new_edge, su dung no de cap nhat lai cay
         #khung trong cum dang xet
-        #Set value propagate:
-        self.remove_all_edge_in_cluster(self.cluster_of_vertices[source_vertex])
+        #Remove all edge:
+        for i in range(num_vertex):
+            for j in range(i+1, num_vertex):
+                self.x[i][j] = 0
+
+        #Update new cost????
         for i in new_edge:
-            self.add_edge(new_edge[j], i)
-        #TODO: Update new cost????
+            self.add_edge(new_edge[i], i)
+        self.calculate_cost()
 
 
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):
@@ -363,6 +367,7 @@ class CluSTP:
             min_index = np.argmin(deltas)
             # if deltas[int(min_index)] <= 0:
             chosen_combination = new_combination_vertices[int(min_index)]
+            self.dijkstra_cluster(out_vertex)
             self.set_value_propagate(out_vertex, connected_vertex, chosen_combination[0], chosen_combination[1])
             # print("Remove", out_vertex, connected_vertex,
             #       "from cluster", self.cluster_of_vertices[out_vertex],

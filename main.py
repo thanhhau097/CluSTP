@@ -290,11 +290,11 @@ class CluSTP:
         for i in range(num_vertex):
             for j in range(num_vertex):
                 if self.x[list_vertex[i]][list_vertex[j]] == 1:
-                    self.remove_edge(i, j)
+                    self.remove_edge(list_vertex[i], list_vertex[j])
 
         #Update new cost????
-        # for i in new_edge:
-            # self.add_edge(new_edge[i], i)
+        for i in new_edge:
+            self.add_edge(new_edge[i], i)
         self.cost = self.calculate_cost()
         self.total_cost = np.sum(self.cost)
 
@@ -373,7 +373,9 @@ class CluSTP:
         # choose one leaf cluster, make change inside cluster, move out-egde of cluster to another cluster
         print("Init out vertices of cluster =", self.out_vertices_of_cluster)
         it = 1
-        while True and it < 1000:
+        best = self.total_cost
+
+        while True and it < 10000:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             (out_vertex, connected_vertex) = old_combination_vertices
 
@@ -386,8 +388,8 @@ class CluSTP:
             min_index = np.argmin(deltas)
             # if deltas[int(min_index)] <= 0:
             chosen_combination = new_combination_vertices[int(min_index)]
-            self.dijkstra_cluster(out_vertex)
             self.set_value_propagate(out_vertex, connected_vertex, chosen_combination[0], chosen_combination[1])
+            self.dijkstra_cluster(out_vertex)
             self.cost = self.calculate_cost()
             self.total_cost = np.sum(self.cost)
             # print("Remove", out_vertex, connected_vertex,
@@ -399,15 +401,18 @@ class CluSTP:
             print("Step", it, "\tCurrent Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
             it += 1
             # print("--------------------------------------------------------------")
+            if best > self.total_cost:
+                self.show_graph()
+                best = self.total_cost
 
 
     def get_solution_file(self):
         pass
 
 obj = CluSTP('data/Type_1_Small/5berlin52.clt')
-obj.load_GA_solution('data/GAsol.opt')
+# obj.load_GA_solution('data/GAsol.opt')
 print(obj.total_cost)
-# obj.init_solution()
+obj.init_solution()
 obj.show_graph()
 # print(obj.source_vertex)
 obj.search()

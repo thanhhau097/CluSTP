@@ -7,18 +7,21 @@ import random
 import copy
 import heapq as priority_queue
 from collections import defaultdict
+import utils
 
 class CluSTP:
-    def __init__(self, filename):
+    def __init__(self, filename, graph_type):
         # variable need to be defined
         # x[i][j]: whether or not point i connects to point j
         # R[i]: set of points in cluster i
-        self.n, self.n_clusters, self.coordinates, self.R, self.source_vertex = self.get_data(filename)
+        if graph_type == "Euclid":
+            self.n, self.n_clusters, self.coordinates, self.R, self.source_vertex = utils.get_data_euclid(filename)
+            self.distances = self.calculate_distance()
+        elif graph_type == "Non_Euclid":
+            self.n, self.n_clusters, self.distances, self.R, self.source_vertex = utils.get_data_non_euclid(filename)
         self.cluster_of_vertices = self.get_cluster_of_vertices(self.R)
         # self.connected_clusters = [set() for i in range(self.n)]
         self.out_vertices_of_cluster = [list() for i in range(self.n_clusters)]
-
-        self.distances = self.calculate_distance()
 
         # need to update in init_solution and set_value_propagate
         self.x = np.zeros([self.n, self.n])
@@ -27,46 +30,6 @@ class CluSTP:
         # n_out[i] numbers of out-edge of cluster i
         # self.n_out = np.zeros(self.n_clusters)
         self.total_cost = 0
-
-    def get_data(self, filename):
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-
-        n = int(lines[2][:-1].split(":")[1])  # number of vertices
-        n_clusters = int(lines[3][:-1].split(":")[1])
-
-        # coordinates of vertices
-        coordinates = []
-        for i in range(6, len(lines) - n_clusters - 3):
-            numbers = lines[i][:-1].replace("  ", " ").split(' ')
-            coordinates.append((int(numbers[1]), int(numbers[2])))
-
-        # R[i]: set of vertices in cluster i
-        R = []
-        for i in range(len(lines) - n_clusters - 1, len(lines) - 1):
-            Ri = set([int(vertex) for vertex in lines[i][:-1].split()[1:-1]])
-            R.append(Ri)
-
-        # source vertice
-        source_vertex = int(lines[len(lines) - n_clusters - 2][:-1].split(":")[1])
-
-        return n, n_clusters, coordinates, R, source_vertex
-
-    def load_GA_solution(self, filename):
-        self.x.fill(0)
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-        size = len(lines) - 6
-        for i in range(6, len(lines)):
-            line = lines[i].split(" ")[:-1]
-            for j in range(size):
-                if line[j] == '1' and self.x[i-6][j] != 1:
-                    self.add_edge(i-6, j)
-        self.cost = self.calculate_cost()
-        self.total_cost = np.sum(self.cost)
-        print(self.x)
-
-
 
     def get_cluster_of_vertices(self, R):
         clusters = np.zeros(self.n)
@@ -375,7 +338,7 @@ class CluSTP:
         it = 1
         best = self.total_cost
 
-        while True and it < 10000:
+        while True and it < 100:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             (out_vertex, connected_vertex) = old_combination_vertices
 
@@ -398,24 +361,47 @@ class CluSTP:
             #       "\nAdd", chosen_combination[0], chosen_combination[1],
             #       "from cluster", self.cluster_of_vertices[chosen_combination[0]],
             #       "to cluster", self.cluster_of_vertices[chosen_combination[1]],)
-            print("Step", it, "\tCurrent Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
+            # print("Step", it, "\tCurrent Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
             it += 1
             # print("--------------------------------------------------------------")
             if best > self.total_cost:
-                self.show_graph()
+                # self.show_graph()
                 best = self.total_cost
 
 
     def get_solution_file(self):
         pass
 
-obj = CluSTP('data/Type_1_Small/5berlin52.clt')
-# obj.load_GA_solution('data/GAsol.opt')
-print(obj.total_cost)
-obj.init_solution()
+
+    def load_result(self, filename):
+        X = utils.get_result(filename)
+        if X.shape[0] != X.shape[1] or X.shape[0] != self.n:
+            print("Error solution")
+            return
+        self.x.fill(0)
+        for i in range(self.n):
+            for j in range(self.n):
+                if X[i][j] == 1 and self.x[i][j] != 1:
+                    self.add_edge(i, j)
+        self.cost = self.calculate_cost()
+        self.total_cost = np.sum(self.cost)
+
+
+obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt', graph_type="Euclid")
+print("Total cost init: " + str(obj.total_cost))
+sol = 'GAsol.opt'
+obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+
+# obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+# print("Total cost init: " + str(obj.total_cost))
+# sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
+# obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+
+# obj.init_solution()
+print("Total cost before local seach: " + str(obj.total_cost))
 obj.show_graph()
 # print(obj.source_vertex)
-obj.search()
-# print(obj.cost)
-obj.show_graph()
+# obj.search()
+# print("Total cost after: " + str(obj.total_cost))
+# obj.show_graph()
 

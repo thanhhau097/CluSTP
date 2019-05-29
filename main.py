@@ -218,17 +218,21 @@ class CluSTP:
         random_cluster = np.random.choice(leaf_clusters)
 
         out_vertices = self.out_vertices_of_cluster[random_cluster]
-        out_vertex = random.sample(out_vertices, 1)[0]
-        connected_vertices = np.where(self.x[out_vertex, :] == 1)[0]
-        # must choose vertex that are not in the same cluster
-        connected_vertices = set(connected_vertices).difference(
-            self.R[random_cluster])
-        connected_vertex = random.sample(connected_vertices, 1)[0]
-        # current_connected_cluster = self.cluster_of_vertices[connected_vertex]
-        # other_clusters = list(range(self.n_clusters)).remove(current_connected_cluster)
+        # TODO
+        # get all out vertex, not random
+        # out_vertex = random.sample(out_vertices, 1)[0]
+        old_combination_vertices = []
+        for out_vertex in out_vertices:
+            connected_vertices = np.where(self.x[out_vertex, :] == 1)[0]
+            # must choose vertex that are not in the same cluster
+            connected_vertices = set(connected_vertices).difference(
+                self.R[random_cluster])
+            connected_vertex = random.sample(connected_vertices, 1)[0]
+            # current_connected_cluster = self.cluster_of_vertices[connected_vertex]
+            # other_clusters = list(range(self.n_clusters)).remove(current_connected_cluster)
+            old_combination_vertices.append((out_vertex, connected_vertex))
 
-        # lấy một đỉnh ở trong random_cluster, nối với những đỉnh bất kỳ khác
-        # cụm
+        # lấy một đỉnh ở trong random_cluster, nối với những đỉnh bất kỳ khác cụm
         cluster_vertices = self.R[random_cluster]
         other_vertices = set(range(self.n)).difference(cluster_vertices)
 
@@ -240,7 +244,7 @@ class CluSTP:
                 new_combination_vertices.append(
                     (new_out_vertex, new_connected_vertex))
 
-        return (out_vertex, connected_vertex), new_combination_vertices
+        return old_combination_vertices, new_combination_vertices
 
     # INSIDE CLUSTER
     def remove_all_edge_in_cluster(self, cluster):
@@ -373,22 +377,31 @@ class CluSTP:
 
         while True and it < 1000:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
-            (out_vertex, connected_vertex) = old_combination_vertices
-
+            # TODO
+            # old_combination_vertices is a list
             deltas = []
-            for combination in new_combination_vertices:
-                new_out_vertex, new_connected_vertex = combination
-                delta = self.get_assign_delta(
-                    out_vertex, connected_vertex, new_out_vertex, new_connected_vertex)
-                delta *= len(self.R[int(self.cluster_of_vertices[out_vertex])])
-                delta += self.dijkstra_cost[new_out_vertex] - self.dijkstra_cost[out_vertex]
-                deltas.append(delta)
+            pair_of_combinations = []
+
+            for old_combination in old_combination_vertices:
+                (out_vertex, connected_vertex) = old_combination
+                for new_combination in new_combination_vertices:
+                    new_out_vertex, new_connected_vertex = new_combination
+                    delta = self.get_assign_delta(
+                        out_vertex, connected_vertex, new_out_vertex, new_connected_vertex)
+                    delta *= len(self.R[int(self.cluster_of_vertices[out_vertex])])
+                    delta += self.dijkstra_cost[new_out_vertex] - self.dijkstra_cost[out_vertex]
+                    deltas.append(delta)
+                    pair_of_combinations.append((old_combination, new_combination))
 
             min_index = np.argmin(deltas)
-            # if deltas[int(min_index)] <= 0:
-            chosen_combination = new_combination_vertices[int(min_index)]
-            self.set_value_propagate(out_vertex, connected_vertex, chosen_combination[
-                                     0], chosen_combination[1])
+
+
+            # CHOOSE TWO COMBINATIONS
+            old_chosen_combination, new_chosen_combination = pair_of_combinations[min_index]
+             # = new_combination_vertices[int(min_index)]
+            out_vertex, connected_vertex = old_chosen_combination
+            self.set_value_propagate(out_vertex, connected_vertex, new_chosen_combination[
+                                     0], new_chosen_combination[1])
             # self.dijkstra_cluster(out_vertex)
             self.cost = self.calculate_cost(self.x, self.source_vertex)
             self.total_cost = np.sum(self.cost)

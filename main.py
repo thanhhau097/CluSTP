@@ -146,8 +146,8 @@ class CluSTP:
 
         # Mark the source node as
         # visited and enqueue it
-        queue.append(self.source_vertex)
-        visited[self.source_vertex] = True
+        queue.append(source_vertex)
+        visited[source_vertex] = True
 
         while queue:
             # Dequeue a vertex from
@@ -192,7 +192,7 @@ class CluSTP:
 
         # n_vertices_in_leaf_cluster = len(self.R[int(self.cluster_of_vertices[out_vertex])])
         # * n_vertices_in_leaf_cluster
-        return (new_edge_distance - old_edge_distance)
+        return (new_edge_distance - old_edge_distance) + (self.cost[new_connected_vertex] - self.cost[connected_vertex])
 
     def set_value_propagate(self, out_vertex, connected_vertex, new_out_vertex, new_connected_vertex):
         # update x, out_vertices_of_cluster
@@ -200,12 +200,12 @@ class CluSTP:
         self.add_edge(new_out_vertex, new_connected_vertex)
 
         # update cost, total cost
-        vertices_in_leaf_cluster = self.R[
-            int(self.cluster_of_vertices[out_vertex])]
-        delta = self.get_assign_delta(
-            out_vertex, connected_vertex, new_out_vertex, new_connected_vertex)
-        for vertex in vertices_in_leaf_cluster:
-            self.cost[vertex] += delta
+        # vertices_in_leaf_cluster = self.R[
+        #     int(self.cluster_of_vertices[out_vertex])]
+        # delta = self.get_assign_delta(
+        #     out_vertex, connected_vertex, new_out_vertex, new_connected_vertex)
+        # for vertex in vertices_in_leaf_cluster:
+        #     self.cost[vertex] += delta
 
         list_vertex = list(self.R[int(self.cluster_of_vertices[out_vertex])])
         num_vertex = len(list_vertex)
@@ -216,7 +216,7 @@ class CluSTP:
 
         self.x += self.dijkstra_result[new_out_vertex]
 
-        self.total_cost += delta * len(vertices_in_leaf_cluster)
+        # self.total_cost += delta * len(vertices_in_leaf_cluster)
 
     def get_neighbors(self):
         # chọn cụm bất kỳ có cạnh ra bằng 1: cụm lá // hiện tại không lại cụm chứa đỉnh gốc vì có khó
@@ -301,12 +301,12 @@ class CluSTP:
             new_edge = self.dijkstra_cluster(i)
             # size = len(self.R[int(self.cluster_of_vertices[i])])
             temp_x = np.zeros([self.n, self.n])
-            for i in new_edge:
-                temp_x[new_edge[i]][i] = 1
-                temp_x[i][new_edge[i]] = 1
+            for j in new_edge.keys():
+                temp_x[j][new_edge[j]] = 1
+                temp_x[new_edge[j]][j] = 1
             cost = self.calculate_cost(temp_x, i)
             dijkstra_cost[i] = np.sum(cost)
-            self.dijkstra_result[new_edge[i]] = temp_x
+            self.dijkstra_result[i] = temp_x
         return dijkstra_cost
 
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):
@@ -446,17 +446,17 @@ class CluSTP:
         self.total_cost = np.sum(self.cost)
 
 
-obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
-             graph_type="Euclid")
-print("Total cost init: " + str(obj.total_cost))
-sol = 'GAsol.opt'
-obj.load_result(
-    'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
-
-# obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+# obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
+#              graph_type="Euclid")
 # print("Total cost init: " + str(obj.total_cost))
-# sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
-# obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+# sol = 'GAsol.opt'
+# obj.load_result(
+    # 'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+
+obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+print("Total cost init: " + str(obj.total_cost))
+sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
+obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
 
 # obj.init_solution()
 print("Total cost before local seach: " + str(obj.total_cost))

@@ -16,6 +16,7 @@ class CluSTP:
         # variable need to be defined
         # x[i][j]: whether or not point i connects to point j
         # R[i]: set of points in cluster i
+        self.time_cost = 0
         if graph_type == "Euclid":
             self.n, self.n_clusters, self.coordinates, self.R, self.source_vertex = utils.get_data_euclid(
                 filename)
@@ -144,7 +145,9 @@ class CluSTP:
             self.out_vertices_of_cluster[
                 int(self.cluster_of_vertices[j])].remove(j)
 
+
     def calculate_cost(self, x, source_vertex):
+        self.time_cost += 1
         list_vertex = self.R[int(self.cluster_of_vertices[source_vertex])]
         cost = np.zeros(self.n)
         cost[source_vertex] = 0
@@ -255,6 +258,10 @@ class CluSTP:
         # lấy một đỉnh ở trong random_cluster, nối với những đỉnh bất kỳ khác cụm
         cluster_vertices = self.R[random_cluster]
         other_vertices = set(range(self.n)).difference(cluster_vertices)
+        # TODO
+        # get random 10% vertices, it could increase cost
+        # you can prevent it by cancelling set_value_propagate when get higher cost
+        # other_vertices = random.sample(other_vertices, int(0.1 * len(other_vertices)))
 
         new_combination_vertices = []
         for new_out_vertex in cluster_vertices:
@@ -431,7 +438,8 @@ class CluSTP:
             #       "\nAdd", chosen_combination[0], chosen_combination[1],
             #       "from cluster", self.cluster_of_vertices[chosen_combination[0]],
             #       "to cluster", self.cluster_of_vertices[chosen_combination[1]],)
-            print("Step", it, "\tDelta", deltas[min_index], "\tCurrent Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
+            print("Step", it, "\tDelta", deltas[min_index], "\tCurrent Cost =", self.total_cost,
+                  "\t", "out vertices =", self.out_vertices_of_cluster, "\ttime cost", self.time_cost)
             it += 1
             # print("--------------------------------------------------------------")
             if best > self.total_cost:

@@ -411,7 +411,7 @@ class CluSTP:
             #       "\nAdd", chosen_combination[0], chosen_combination[1],
             #       "from cluster", self.cluster_of_vertices[chosen_combination[0]],
             #       "to cluster", self.cluster_of_vertices[chosen_combination[1]],)
-            print("Step", it, "\tCurrent Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
+            print("Step", it, "\tDelta", deltas[min_index], "\tCurrent Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
             it += 1
             # print("--------------------------------------------------------------")
             if best > self.total_cost:

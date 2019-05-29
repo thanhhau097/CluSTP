@@ -299,14 +299,14 @@ class CluSTP:
         dijkstra_cost = np.zeros(self.n)
         for i in range(self.n):
             new_edge = self.dijkstra_cluster(i)
-            size = len(self.R[int(self.cluster_of_vertices[i])])
+            # size = len(self.R[int(self.cluster_of_vertices[i])])
             temp_x = np.zeros([self.n, self.n])
             for i in new_edge:
                 temp_x[new_edge[i]][i] = 1
                 temp_x[i][new_edge[i]] = 1
             cost = self.calculate_cost(temp_x, i)
             dijkstra_cost[i] = np.sum(cost)
-            self.dijkstra_result[i] = temp_x
+            self.dijkstra_result[new_edge[i]] = temp_x
         return dijkstra_cost
 
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):

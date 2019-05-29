@@ -386,7 +386,7 @@ class CluSTP:
         it = 1
         best = self.total_cost
 
-        while True and it < 10:
+        while True and it < 100:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             # TODO
             # old_combination_vertices is a list
@@ -405,7 +405,6 @@ class CluSTP:
                     pair_of_combinations.append((old_combination, new_combination))
 
             min_index = np.argmin(deltas)
-
 
             # CHOOSE TWO COMBINATIONS
             old_chosen_combination, new_chosen_combination = pair_of_combinations[min_index]
@@ -446,17 +445,18 @@ class CluSTP:
         self.total_cost = np.sum(self.cost)
 
 
-# obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
-#              graph_type="Euclid")
-# print("Total cost init: " + str(obj.total_cost))
+obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
+             graph_type="Euclid")
+obj.init_solution()
+print("Total cost init: " + str(obj.total_cost))
 # sol = 'GAsol.opt'
 # obj.load_result(
-    # 'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+#     'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
 
-obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
-print("Total cost init: " + str(obj.total_cost))
-sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
-obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+# obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+# print("Total cost init: " + str(obj.total_cost))
+# sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
+# obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
 
 # obj.init_solution()
 print("Total cost before local seach: " + str(obj.total_cost))

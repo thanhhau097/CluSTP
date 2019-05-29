@@ -36,7 +36,7 @@ class CluSTP:
         self.total_cost = 0
         self.dijkstra_cost = np.zeros(self.n)
         self.dijkstra_result = [0]*self.n
-        self.dijkstra_cluster = self.calculate_dijkstra_cost()
+        self.dijkstra_cost = self.calculate_dijkstra_cost()
 
     def get_cluster_of_vertices(self, R):
         clusters = np.zeros(self.n)

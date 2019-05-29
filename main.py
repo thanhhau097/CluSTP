@@ -35,6 +35,7 @@ class CluSTP:
         # self.n_out = np.zeros(self.n_clusters)
         self.total_cost = 0
         self.dijkstra_cost = np.zeros(self.n)
+        self.dijkstra_result = [0]*self.n
         self.dijkstra_cluster = self.calculate_dijkstra_cost()
 
     def get_cluster_of_vertices(self, R):
@@ -206,6 +207,15 @@ class CluSTP:
         for vertex in vertices_in_leaf_cluster:
             self.cost[vertex] += delta
 
+        list_vertex = list(self.R[int(self.cluster_of_vertices[out_vertex])])
+        num_vertex = len(list_vertex)
+        for i in range(num_vertex):
+            for j in range(num_vertex):
+                if self.x[list_vertex[i]][list_vertex[j]] == 1:
+                    self.remove_edge(list_vertex[i], list_vertex[j])
+
+        self.x += self.dijkstra_result[new_out_vertex]
+
         self.total_cost += delta * len(vertices_in_leaf_cluster)
 
     def get_neighbors(self):
@@ -296,6 +306,7 @@ class CluSTP:
                 temp_x[i][new_edge[i]] = 1
             cost = self.calculate_cost(temp_x, i)
             dijkstra_cost[i] = np.sum(cost)
+            self.dijkstra_result[i] = temp_x
         return dijkstra_cost
 
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):
@@ -375,7 +386,7 @@ class CluSTP:
         it = 1
         best = self.total_cost
 
-        while True and it < 1000:
+        while True and it < 10:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             # TODO
             # old_combination_vertices is a list
@@ -435,22 +446,22 @@ class CluSTP:
         self.total_cost = np.sum(self.cost)
 
 
-# obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
-             # graph_type="Euclid")
-# print("Total cost init: " + str(obj.total_cost))
-# sol = 'GAsol.opt'
-# obj.load_result(
-    # 'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
-
-obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
+             graph_type="Euclid")
 print("Total cost init: " + str(obj.total_cost))
-sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
-obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+sol = 'GAsol.opt'
+obj.load_result(
+    'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+
+# obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+# print("Total cost init: " + str(obj.total_cost))
+# sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
+# obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
 
 # obj.init_solution()
 print("Total cost before local seach: " + str(obj.total_cost))
-# obj.show_graph()
+obj.show_graph()
 # print(obj.source_vertex)
 obj.search()
 print("Total cost after: " + str(obj.total_cost))
-# obj.show_graph()
+obj.show_graph()

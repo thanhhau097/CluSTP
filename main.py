@@ -9,16 +9,20 @@ import heapq as priority_queue
 from collections import defaultdict
 import utils
 
+
 class CluSTP:
+
     def __init__(self, filename, graph_type):
         # variable need to be defined
         # x[i][j]: whether or not point i connects to point j
         # R[i]: set of points in cluster i
         if graph_type == "Euclid":
-            self.n, self.n_clusters, self.coordinates, self.R, self.source_vertex = utils.get_data_euclid(filename)
+            self.n, self.n_clusters, self.coordinates, self.R, self.source_vertex = utils.get_data_euclid(
+                filename)
             self.distances = self.calculate_distance()
         elif graph_type == "Non_Euclid":
-            self.n, self.n_clusters, self.distances, self.R, self.source_vertex = utils.get_data_non_euclid(filename)
+            self.n, self.n_clusters, self.distances, self.R, self.source_vertex = utils.get_data_non_euclid(
+                filename)
         self.cluster_of_vertices = self.get_cluster_of_vertices(self.R)
         # self.connected_clusters = [set() for i in range(self.n)]
         self.out_vertices_of_cluster = [list() for i in range(self.n_clusters)]
@@ -30,6 +34,8 @@ class CluSTP:
         # n_out[i] numbers of out-edge of cluster i
         # self.n_out = np.zeros(self.n_clusters)
         self.total_cost = 0
+        self.dijkstra_cost = np.zeros(self.n)
+        self.dijkstra_cluster = self.calculate_dijkstra_cost()
 
     def get_cluster_of_vertices(self, R):
         clusters = np.zeros(self.n)
@@ -75,10 +81,12 @@ class CluSTP:
 
         while (len(open_set)) != 0:
             random_close_cluster = random.sample(close_set, 1)[0]
-            random_close_vertex = random.sample(self.R[random_close_cluster], 1)[0]
+            random_close_vertex = random.sample(
+                self.R[random_close_cluster], 1)[0]
 
             random_open_cluster = random.sample(open_set, 1)[0]
-            random_open_vertex = random.sample(self.R[random_open_cluster], 1)[0]
+            random_open_vertex = random.sample(
+                self.R[random_open_cluster], 1)[0]
 
             self.add_edge(random_close_vertex, random_open_vertex)
 
@@ -88,7 +96,7 @@ class CluSTP:
 
             # 3. cập nhật cost, total_cost
             #         pass
-            self.cost = self.calculate_cost()
+            self.cost = self.calculate_cost(self.x, self.source_vertex)
             self.total_cost = np.sum(self.cost)
             print("Connect cluster", random_close_cluster, random_open_cluster)
 
@@ -104,8 +112,10 @@ class CluSTP:
             # self.connected_clusters[int(self.cluster_of_vertices[i])].add(self.cluster_of_vertices[j])
             # self.connected_clusters[int(self.cluster_of_vertices[j])].add(self.cluster_of_vertices[i])
 
-            self.out_vertices_of_cluster[int(self.cluster_of_vertices[i])].append(i)
-            self.out_vertices_of_cluster[int(self.cluster_of_vertices[j])].append(j)
+            self.out_vertices_of_cluster[
+                int(self.cluster_of_vertices[i])].append(i)
+            self.out_vertices_of_cluster[
+                int(self.cluster_of_vertices[j])].append(j)
 
     def remove_edge(self, i, j):
         self.x[i][j] = 0
@@ -118,12 +128,15 @@ class CluSTP:
             # self.connected_clusters[int(self.cluster_of_vertices[i])].remove(self.cluster_of_vertices[j])
             # self.connected_clusters[int(self.cluster_of_vertices[j])].remove(self.cluster_of_vertices[i])
 
-            self.out_vertices_of_cluster[int(self.cluster_of_vertices[i])].remove(i)
-            self.out_vertices_of_cluster[int(self.cluster_of_vertices[j])].remove(j)
+            self.out_vertices_of_cluster[
+                int(self.cluster_of_vertices[i])].remove(i)
+            self.out_vertices_of_cluster[
+                int(self.cluster_of_vertices[j])].remove(j)
 
-    def calculate_cost(self):
+    def calculate_cost(self, x, source_vertex):
+        list_vertex = self.R[int(self.cluster_of_vertices[source_vertex])]
         cost = np.zeros(self.n)
-        cost[self.source_vertex] = 0
+        cost[source_vertex] = 0
         # Mark all the vertices as not visited
         visited = [False] * self.n
 
@@ -145,19 +158,22 @@ class CluSTP:
             # dequeued vertex s. If a adjacent
             # has not been visited, then mark it
             # visited and enqueue it
-            neighbors = np.where(self.x[s] == 1)[0]
+            neighbors = np.where(x[s] == 1)[0]
+            if source_vertex != self.source_vertex:
+                neighbors = list(
+                    set(np.where(x[s] == 1)[0]).intersection(list_vertex))
             for i in neighbors:
                 if visited[i] == False:
                     queue.append(i)
                     visited[i] = True
                     cost[i] = self.distances[s][i] + cost[s]
-
         return cost
 
     def show_graph(self):
         G = nx.Graph()
         edges = np.where(self.x == 1)
-        edges = [e for e in zip(list(edges[0]), list(edges[1])) if e[0] <= e[1]]
+        edges = [e for e in zip(list(edges[0]), list(edges[1])) if e[
+            0] <= e[1]]
         G.add_edges_from(edges)
 #         print(edges)
 #         print(G.nodes())
@@ -170,10 +186,12 @@ class CluSTP:
     def get_assign_delta(self, out_vertex, connected_vertex, new_out_vertex, new_connected_vertex):
         # return changed value of just one vertex in that cluster
         old_edge_distance = self.distances[out_vertex, connected_vertex]
-        new_edge_distance = self.distances[new_out_vertex, new_connected_vertex]
+        new_edge_distance = self.distances[
+            new_out_vertex, new_connected_vertex]
 
         # n_vertices_in_leaf_cluster = len(self.R[int(self.cluster_of_vertices[out_vertex])])
-        return (new_edge_distance - old_edge_distance) #* n_vertices_in_leaf_cluster
+        # * n_vertices_in_leaf_cluster
+        return (new_edge_distance - old_edge_distance)
 
     def set_value_propagate(self, out_vertex, connected_vertex, new_out_vertex, new_connected_vertex):
         # update x, out_vertices_of_cluster
@@ -181,8 +199,10 @@ class CluSTP:
         self.add_edge(new_out_vertex, new_connected_vertex)
 
         # update cost, total cost
-        vertices_in_leaf_cluster = self.R[int(self.cluster_of_vertices[out_vertex])]
-        delta = self.get_assign_delta(out_vertex, connected_vertex, new_out_vertex, new_connected_vertex)
+        vertices_in_leaf_cluster = self.R[
+            int(self.cluster_of_vertices[out_vertex])]
+        delta = self.get_assign_delta(
+            out_vertex, connected_vertex, new_out_vertex, new_connected_vertex)
         for vertex in vertices_in_leaf_cluster:
             self.cost[vertex] += delta
 
@@ -191,7 +211,8 @@ class CluSTP:
     def get_neighbors(self):
         # chọn cụm bất kỳ có cạnh ra bằng 1: cụm lá // hiện tại không lại cụm chứa đỉnh gốc vì có khó
         # khăn ở bước thay đổi cost
-        leaf_clusters = [i for i in range(self.n_clusters) if len(self.out_vertices_of_cluster[i]) == 1] #np.where(self.n_out == 1)[0]
+        leaf_clusters = [i for i in range(self.n_clusters) if len(
+            self.out_vertices_of_cluster[i]) == 1]  # np.where(self.n_out == 1)[0]
         if self.cluster_of_vertices[self.source_vertex] in leaf_clusters:
             leaf_clusters.remove(self.cluster_of_vertices[self.source_vertex])
         random_cluster = np.random.choice(leaf_clusters)
@@ -199,13 +220,15 @@ class CluSTP:
         out_vertices = self.out_vertices_of_cluster[random_cluster]
         out_vertex = random.sample(out_vertices, 1)[0]
         connected_vertices = np.where(self.x[out_vertex, :] == 1)[0]
-            # must choose vertex that are not in the same cluster
-        connected_vertices = set(connected_vertices).difference(self.R[random_cluster])
+        # must choose vertex that are not in the same cluster
+        connected_vertices = set(connected_vertices).difference(
+            self.R[random_cluster])
         connected_vertex = random.sample(connected_vertices, 1)[0]
         # current_connected_cluster = self.cluster_of_vertices[connected_vertex]
         # other_clusters = list(range(self.n_clusters)).remove(current_connected_cluster)
 
-        # lấy một đỉnh ở trong random_cluster, nối với những đỉnh bất kỳ khác cụm
+        # lấy một đỉnh ở trong random_cluster, nối với những đỉnh bất kỳ khác
+        # cụm
         cluster_vertices = self.R[random_cluster]
         other_vertices = set(range(self.n)).difference(cluster_vertices)
 
@@ -214,20 +237,22 @@ class CluSTP:
             for new_connected_vertex in other_vertices:
                 # if self.cluster_of_vertices[new_out_vertex] == self.cluster_of_vertices[new_connected_vertex]:
                     # print(1)
-                new_combination_vertices.append((new_out_vertex, new_connected_vertex))
+                new_combination_vertices.append(
+                    (new_out_vertex, new_connected_vertex))
 
         return (out_vertex, connected_vertex), new_combination_vertices
 
-    #### INSIDE CLUSTER
+    # INSIDE CLUSTER
     def remove_all_edge_in_cluster(self, cluster):
         pass
 
     def dijkstra_cluster(self, source_vertex):
         new_edge = {}
-        S1 = defaultdict(lambda:False)
+        S1 = defaultdict(lambda: False)
         p_queue = []
-        min_distance = defaultdict(lambda:float("inf"))
-        list_vertex = list(self.R[int(self.cluster_of_vertices[source_vertex])])
+        min_distance = defaultdict(lambda: float("inf"))
+        list_vertex = list(
+            self.R[int(self.cluster_of_vertices[source_vertex])])
         num_vertex = len(list_vertex)
         min_distance[source_vertex] = 0
         priority_queue.heappush(p_queue, (0, source_vertex))
@@ -245,22 +270,29 @@ class CluSTP:
                     priority_queue.heappush(p_queue, (min_distance[v], v))
                     new_edge[v] = u[1]
 
-        #Sau khi tim duoc cac canh moi o new_edge, su dung no de cap nhat lai cay
-        #khung trong cum dang xet
-        #Remove all edge:
-        # for i in range(list_vertex):
-            # for 
-        for i in range(num_vertex):
-            for j in range(num_vertex):
-                if self.x[list_vertex[i]][list_vertex[j]] == 1:
-                    self.remove_edge(list_vertex[i], list_vertex[j])
+        return new_edge
+        # Sau khi tim duoc cac canh moi o new_edge, su dung no de cap nhat lai cay
+        # khung trong cum dang xet
 
-        #Update new cost????
-        for i in new_edge:
-            self.add_edge(new_edge[i], i)
-        self.cost = self.calculate_cost()
-        self.total_cost = np.sum(self.cost)
+        # Remove all edge:
+        # for i in range(num_vertex):
+        # for j in range(num_vertex):
+        # if self.x[list_vertex[i]][list_vertex[j]] == 1:
+        # self.remove_edge(list_vertex[i], list_vertex[j])
+        # Update edge new cost
 
+    def calculate_dijkstra_cost(self):
+        dijkstra_cost = np.zeros(self.n)
+        for i in range(self.n):
+            new_edge = self.dijkstra_cluster(i)
+            size = len(self.R[int(self.cluster_of_vertices[i])])
+            temp_x = np.zeros([self.n, self.n])
+            for i in new_edge:
+                temp_x[new_edge[i]][i] = 1
+                temp_x[i][new_edge[i]] = 1
+            cost = self.calculate_cost(temp_x, i)
+            dijkstra_cost[i] = np.sum(cost)
+        return dijkstra_cost
 
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):
         pass
@@ -321,39 +353,44 @@ class CluSTP:
 
     def get_neighbors_inside_cluster(self):
         random_cluster = np.random.randint(self.n_clusters)
-        while len(self.R[random_cluster]) <= 2: # không xét đến cluster có 2 đỉnh
+        while len(self.R[random_cluster]) <= 2:  # không xét đến cluster có 2 đỉnh
             random_cluster = np.random.randint(self.n_clusters)
-        # tạo chu trình trong cluster đc chọn này, sau đó loại bỏ 1 cạnh trong chu trình để được cây khung mới
+        # tạo chu trình trong cluster đc chọn này, sau đó loại bỏ 1 cạnh trong
+        # chu trình để được cây khung mới
         cluster_vertices = self.R[random_cluster]
 
         # use DFS
 
-
-    ###### SEARCH
+    # SEARCH
 
     def search(self):
         # search solution:
-        # choose one leaf cluster, make change inside cluster, move out-egde of cluster to another cluster
+        # choose one leaf cluster, make change inside cluster, move out-egde of
+        # cluster to another cluster
         print("Init out vertices of cluster =", self.out_vertices_of_cluster)
         it = 1
         best = self.total_cost
 
-        while True and it < 100:
+        while True and it < 1000:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             (out_vertex, connected_vertex) = old_combination_vertices
 
             deltas = []
             for combination in new_combination_vertices:
                 new_out_vertex, new_connected_vertex = combination
-                delta = self.get_assign_delta(out_vertex, connected_vertex, new_out_vertex, new_connected_vertex)
+                delta = self.get_assign_delta(
+                    out_vertex, connected_vertex, new_out_vertex, new_connected_vertex)
+                delta *= len(self.R[int(self.cluster_of_vertices[out_vertex])])
+                delta += self.dijkstra_cost[new_out_vertex] - self.dijkstra_cost[out_vertex]
                 deltas.append(delta)
 
             min_index = np.argmin(deltas)
             # if deltas[int(min_index)] <= 0:
             chosen_combination = new_combination_vertices[int(min_index)]
-            self.set_value_propagate(out_vertex, connected_vertex, chosen_combination[0], chosen_combination[1])
-            self.dijkstra_cluster(out_vertex)
-            self.cost = self.calculate_cost()
+            self.set_value_propagate(out_vertex, connected_vertex, chosen_combination[
+                                     0], chosen_combination[1])
+            # self.dijkstra_cluster(out_vertex)
+            self.cost = self.calculate_cost(self.x, self.source_vertex)
             self.total_cost = np.sum(self.cost)
             # print("Remove", out_vertex, connected_vertex,
             #       "from cluster", self.cluster_of_vertices[out_vertex],
@@ -361,17 +398,15 @@ class CluSTP:
             #       "\nAdd", chosen_combination[0], chosen_combination[1],
             #       "from cluster", self.cluster_of_vertices[chosen_combination[0]],
             #       "to cluster", self.cluster_of_vertices[chosen_combination[1]],)
-            # print("Step", it, "\tCurrent Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
+            print("Step", it, "\tCurrent Cost =", self.total_cost, "\t", "out vertices =", self.out_vertices_of_cluster)
             it += 1
             # print("--------------------------------------------------------------")
             if best > self.total_cost:
                 # self.show_graph()
                 best = self.total_cost
 
-
     def get_solution_file(self):
         pass
-
 
     def load_result(self, filename):
         X = utils.get_result(filename)
@@ -383,25 +418,26 @@ class CluSTP:
             for j in range(self.n):
                 if X[i][j] == 1 and self.x[i][j] != 1:
                     self.add_edge(i, j)
-        self.cost = self.calculate_cost()
+        self.cost = self.calculate_cost(self.x, self.source_vertex)
         self.total_cost = np.sum(self.cost)
 
 
-obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt', graph_type="Euclid")
-print("Total cost init: " + str(obj.total_cost))
-sol = 'GAsol.opt'
-obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
-
-# obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+# obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
+             # graph_type="Euclid")
 # print("Total cost init: " + str(obj.total_cost))
-# sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
-# obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+# sol = 'GAsol.opt'
+# obj.load_result(
+    # 'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+
+obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+print("Total cost init: " + str(obj.total_cost))
+sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
+obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
 
 # obj.init_solution()
 print("Total cost before local seach: " + str(obj.total_cost))
-obj.show_graph()
-# print(obj.source_vertex)
-# obj.search()
-# print("Total cost after: " + str(obj.total_cost))
 # obj.show_graph()
-
+# print(obj.source_vertex)
+obj.search()
+print("Total cost after: " + str(obj.total_cost))
+# obj.show_graph()

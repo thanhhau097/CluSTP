@@ -101,6 +101,16 @@ class CluSTP:
             self.total_cost = np.sum(self.cost)
             print("Connect cluster", random_close_cluster, random_open_cluster)
 
+        # Dijkstra for source vertex
+        list_vertex = list(self.R[int(self.cluster_of_vertices[self.source_vertex])])
+        num_vertex = len(list_vertex)
+        for i in range(num_vertex):
+            for j in range(num_vertex):
+                if self.x[list_vertex[i]][list_vertex[j]] == 1:
+                    self.remove_edge(list_vertex[i], list_vertex[j])
+
+        self.x += self.dijkstra_result[self.source_vertex]
+
     def add_edge(self, i, j):
         # print('add', i, j)
         self.x[i][j] = 1

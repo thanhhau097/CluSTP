@@ -100,7 +100,7 @@ class CluSTP:
             #         pass
             self.cost = self.calculate_cost(self.x, self.source_vertex)
             self.total_cost = np.sum(self.cost)
-            print("Connect cluster", random_close_cluster, random_open_cluster)
+            # print("Connect cluster", random_close_cluster, random_open_cluster)
 
         # Dijkstra for source vertex
         list_vertex = list(self.R[int(self.cluster_of_vertices[self.source_vertex])])
@@ -399,7 +399,7 @@ class CluSTP:
         # search solution:
         # choose one leaf cluster, make change inside cluster, move out-egde of
         # cluster to another cluster
-        print("Init out vertices of cluster =", self.out_vertices_of_cluster)
+        # print("Init out vertices of cluster =", self.out_vertices_of_cluster)
         it = 1
         best = self.total_cost
 
@@ -438,8 +438,8 @@ class CluSTP:
             #       "\nAdd", chosen_combination[0], chosen_combination[1],
             #       "from cluster", self.cluster_of_vertices[chosen_combination[0]],
             #       "to cluster", self.cluster_of_vertices[chosen_combination[1]],)
-            print("Step", it, "\tDelta", deltas[min_index], "\tCurrent Cost =", self.total_cost,
-                  "\t", "out vertices =", self.out_vertices_of_cluster, "\ttime cost", self.time_cost)
+            # print("Step", it, "\tDelta", deltas[min_index], "\tCurrent Cost =", self.total_cost,
+            #       "\t", "out vertices =", self.out_vertices_of_cluster, "\ttime cost", self.time_cost)
             it += 1
             # print("--------------------------------------------------------------")
             if best > self.total_cost:
@@ -463,10 +463,10 @@ class CluSTP:
         self.total_cost = np.sum(self.cost)
 
 
-obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
-             graph_type="Euclid")
-obj.init_solution()
-print("Total cost init: " + str(obj.total_cost))
+# obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
+#              graph_type="Euclid")
+# obj.init_solution()
+# print("Total cost init: " + str(obj.total_cost))
 # sol = 'GAsol.opt'
 # obj.load_result(
 #     'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
@@ -474,12 +474,38 @@ print("Total cost init: " + str(obj.total_cost))
 # obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
 # print("Total cost init: " + str(obj.total_cost))
 # sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
-# obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+# # obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
+#
+# # obj.init_solution()
+# print("Total cost before local seach: " + str(obj.total_cost))
+# # obj.show_graph()
+# # print(obj.source_vertex)
+# obj.search()
+# print("Total cost after: " + str(obj.total_cost))
+# # obj.show_graph()
 
-# obj.init_solution()
-print("Total cost before local seach: " + str(obj.total_cost))
-obj.show_graph()
-# print(obj.source_vertex)
-obj.search()
-print("Total cost after: " + str(obj.total_cost))
-obj.show_graph()
+import os
+import json
+
+
+directory = 'data/Non_Euclid/Type_1_Small'
+files = os.listdir(directory)
+
+results = []
+for file in files:
+    if file[-3:] != "clt":
+        continue
+    print("Solving", file)
+    result = {}
+    result["filename"] = file
+    path = os.path.join(directory, file)
+    obj = CluSTP(filename=path, graph_type="Non_Euclid")
+    obj.init_solution()
+    result["init_cost"] = str(obj.total_cost)
+    obj.search()
+    result["final_cost"] = str(obj.total_cost)
+
+    results.append(result)
+
+with open("result.json", 'w') as f:
+    json.dump(results, f)

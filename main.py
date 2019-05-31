@@ -200,8 +200,7 @@ class CluSTP:
     def get_assign_delta(self, out_vertex, connected_vertex, new_out_vertex, new_connected_vertex):
         # return changed value of just one vertex in that cluster
         old_edge_distance = self.distances[out_vertex, connected_vertex]
-        new_edge_distance = self.distances[
-            new_out_vertex, new_connected_vertex]
+        new_edge_distance = self.distances[new_out_vertex, new_connected_vertex]
 
         # n_vertices_in_leaf_cluster = len(self.R[int(self.cluster_of_vertices[out_vertex])])
         # * n_vertices_in_leaf_cluster
@@ -324,6 +323,7 @@ class CluSTP:
             cost = self.calculate_cost(temp_x, i)
             dijkstra_cost[i] = np.sum(cost)
             self.dijkstra_result[i] = temp_x
+
         return dijkstra_cost
 
     def get_assign_delta_inside_cluster(self, cluster, new_edge, old_edge):
@@ -403,7 +403,7 @@ class CluSTP:
         it = 1
         best = self.total_cost
 
-        while True and it < 100:
+        while True and it < 1000:
             old_combination_vertices, new_combination_vertices = self.get_neighbors()
             # TODO
             # old_combination_vertices is a list
@@ -424,7 +424,7 @@ class CluSTP:
             min_index = np.argmin(deltas)
 
             # CHOOSE TWO COMBINATIONS
-            old_chosen_combination, new_chosen_combination = pair_of_combinations[min_index]
+            old_chosen_combination, new_chosen_combination = pair_of_combinations[int(min_index)]
              # = new_combination_vertices[int(min_index)]
             out_vertex, connected_vertex = old_chosen_combination
             self.set_value_propagate(out_vertex, connected_vertex, new_chosen_combination[
@@ -438,8 +438,8 @@ class CluSTP:
             #       "\nAdd", chosen_combination[0], chosen_combination[1],
             #       "from cluster", self.cluster_of_vertices[chosen_combination[0]],
             #       "to cluster", self.cluster_of_vertices[chosen_combination[1]],)
-            # print("Step", it, "\tDelta", deltas[min_index], "\tCurrent Cost =", self.total_cost,
-            #       "\t", "out vertices =", self.out_vertices_of_cluster, "\ttime cost", self.time_cost)
+            print("Step", it, "\tDelta", deltas[int(min_index)], "\tCurrent Cost =", self.total_cost,
+                  "\t", "out vertices =", self.out_vertices_of_cluster, "\ttime cost", self.time_cost)
             it += 1
             # print("--------------------------------------------------------------")
             if best > self.total_cost:
@@ -465,13 +465,13 @@ class CluSTP:
 
 # obj = CluSTP(filename='data/Euclid/Type_1_Small/5berlin52.clt',
 #              graph_type="Euclid")
-# obj.init_solution()
-# print("Total cost init: " + str(obj.total_cost))
+# # obj.init_solution()
+# # print("Total cost init: " + str(obj.total_cost))
 # sol = 'GAsol.opt'
 # obj.load_result(
 #     'data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
-
-# obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
+#
+# # obj = CluSTP(filename='data/Non_Euclid/Type_1_Small/5berlin52.clt', graph_type="Non_Euclid")
 # print("Total cost init: " + str(obj.total_cost))
 # sol = 'Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)_Seed(19).opt'
 # # obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_5berlin52)_Instance(5berlin52)/LocalSearch/' + sol)
@@ -500,12 +500,17 @@ for file in files:
     result["filename"] = file
     path = os.path.join(directory, file)
     obj = CluSTP(filename=path, graph_type="Non_Euclid")
-    obj.init_solution()
+    # obj.init_solution()
+    name = file.split(".")[0]
+    sol = 'Para_File(GA_Clus_Tree_{})_Instance({})_Seed(19).opt'.format(name, name)
+    obj.load_result('data/Result/Type_1_Small/Para_File(GA_Clus_Tree_{})_Instance({})/LocalSearch/'.format(name, name) + sol)
+
     result["init_cost"] = str(obj.total_cost)
     obj.search()
     result["final_cost"] = str(obj.total_cost)
 
     results.append(result)
+    break
 
-with open("result.json", 'w') as f:
+with open("result_ga.json", 'w') as f:
     json.dump(results, f)
